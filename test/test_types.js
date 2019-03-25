@@ -1408,6 +1408,79 @@ suite('types', function () {
       );
     });
 
+    test.only('round-trip multi-block merge string array', function() {
+      var tap = new Tap(utils.newBuffer(27));
+      tap.writeInt(2);
+      tap.writeString('hi');
+      tap.writeString('hey');
+      tap.writeInt(2);
+      tap.writeString('you');
+      tap.writeString('hello');
+      tap.writeInt(1);
+      tap.writeString('world');
+      tap.writeInt(0);
+      var t = new builtins.ArrayType({items: 'string'});
+      tap.pos = 0;
+      var newlen = t._merge(tap, "world!!", 3)
+      assert.deepEqual(
+        t.fromBuffer(tap.buf.slice(0, newlen)),
+        ['hi', 'hey', 'you', 'world!!', 'world']
+      );
+    })
+
+    test.only('round-trip multi-block merge float array', function() {
+      var tap = new Tap(utils.newBuffer(64));
+      tap.writeInt(2);
+      tap.writeFloat(1.125);
+      tap.writeFloat(2);
+      tap.writeInt(2);
+      tap.writeFloat(3);
+      tap.writeFloat(4);
+      tap.writeInt(1);
+      tap.writeFloat(5);
+      tap.writeInt(0);
+      var t = new builtins.ArrayType({items: 'float'});
+      tap.pos = 0;
+      var newlen = t._merge(tap, 4.5, 3)
+      assert.deepEqual(
+        t.fromBuffer(tap.buf.slice(0, newlen)),
+        [1.125, 2, 3, 4.5, 5]
+      );
+    })
+
+    test.only('_pack float array', function() {
+      var buffers = [utils.newBuffer(4), utils.newBuffer(4), utils.newBuffer(4)]
+      buffers.forEach((buffer, index) => {
+        var bf = new Tap(buffer)
+        bf.writeFloat(index)
+      })
+
+      var tap = new Tap(utils.newBuffer(20));
+      var t = new builtins.ArrayType({items: 'float'});
+      tap.pos = 0;
+      var newlen = t._pack(tap, buffers)
+      assert.deepEqual(
+        t.fromBuffer(tap.buf.slice(0, newlen)),
+        [0,1,2]
+      );
+    })
+
+    test.only('_pack string array', function() {
+      var buffers = [utils.newBuffer(4), utils.newBuffer(4), utils.newBuffer(4)]
+      buffers.forEach((buffer, index) => {
+        var bf = new Tap(buffer)
+        bf.writeString("abc");
+      })
+
+      var tap = new Tap(utils.newBuffer(20));
+      var t = new builtins.ArrayType({items: 'string'});
+      tap.pos = 0;
+      var newlen = t._pack(tap, buffers)
+      assert.deepEqual(
+        t.fromBuffer(tap.buf.slice(0, newlen)),
+        ["abc","abc","abc"]
+      );
+    })
   });
 
   suite('RecordType', function () {
